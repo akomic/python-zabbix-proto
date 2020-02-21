@@ -16,8 +16,7 @@ setup(name='ZabbixProto',
           're',
           'socket',
           'struct',
-          'time',
-          'packaging'
+          'time'
       ],
       keywords='Zabbix Protocols Sender Proxy Agent',
       license='Apache Software License',
