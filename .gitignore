@@ -1,0 +1,7 @@
+**/*~
+**/*.pyc
+**/__pycache__
+build
+x.py
+dist
+*.json
