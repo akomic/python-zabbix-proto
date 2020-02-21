@@ -14,14 +14,7 @@ class Proxy:
     def send_heartbeat(self):
         packet = ProxyHeartbeatPacket(self.proxy_name)
 
-        resp = self.client.send(packet)
-        if 'response' in resp.data and resp.data['response'] == 'success':
-            return True, ''
-        else:
-            msg = 'no response'
-            if 'info' in resp.data:
-                msg = resp.data['info']
-            return False, msg
+        self.sendWithResponse(packet)
 
     def sendWithResponse(self, packet):
         resp = self.client.send(packet)
@@ -32,7 +25,7 @@ class Proxy:
                 raise ResponseException(resp.data['info'])
             else:
                 raise ResponseException('unknown failure: {}'.format(resp))
-        return
+        return (resp.data['info'] if 'info' in resp.data else '')
 
     def get_config(self):
         packet = ProxyConfigPacket(self.proxy_name)

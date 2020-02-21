@@ -26,6 +26,6 @@ data.add(host='testhost', key='my.key',
          value=100)
 # UNSUPPORTED
 data.add(host='testhost', key='my.key2',
-         value='Unsupported because this and that', state=1)
+         value='Unsupported because of this and that', state=1)
 proxy.sendWithResponse(data)
 ```
