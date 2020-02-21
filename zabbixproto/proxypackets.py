@@ -23,7 +23,7 @@ class Proxy:
                 msg = resp.data['info']
             return False, msg
 
-    def send_auto_registration(self, packet):
+    def sendWithResponse(self, packet):
         resp = self.client.send(packet)
         if 'response' not in resp.data:
             raise ResponseException('no response')
@@ -138,6 +138,111 @@ class ProxyAutoregistrationPacket:
 
     def clean(self):
         self.packet = {'request': 'auto registration',
+                       'host': self.proxy_name,
+                       'data': [],
+                       'clock': datetime.now().timestamp()}
+
+
+class ProxyHostavailabilityPacket:
+    # This is for version 3.2.X only
+
+    def __init__(self, proxy_name):
+        self.proxy_name = proxy_name
+        self.clean()
+
+    def __str__(self):
+        return json.dumps(self.packet)
+
+    def add(self, hostid, available, error='', snmp_available=None, snmp_error='', ipmi_available=None, ipmi_error='', jmx_available=None, jmx_error=''):
+        # 	available	number	Zabbix agent availability
+
+        # 0, HOST_AVAILABLE_UNKNOWN - unknown
+        # 1, HOST_AVAILABLE_TRUE - available
+        # 2, HOST_AVAILABLE_FALSE - unavailable
+        # error	string	Zabbix agent error message or empty string
+        # snmp_available	number	SNMP agent availability
+
+        # 0, HOST_AVAILABLE_UNKNOWN - unknown
+        # 1, HOST_AVAILABLE_TRUE - available
+        # 2, HOST_AVAILABLE_FALSE - unavailable
+        # snmp_error	string	SNMP agent error message or empty string
+        # ipmi_available	number	IPMI agent availability
+
+        # 0, HOST_AVAILABLE_UNKNOWN - unknown
+        # 1, HOST_AVAILABLE_TRUE - available
+        # 2, HOST_AVAILABLE_FALSE - unavailable
+        # ipmi_error	string	IPMI agent error message or empty string
+        # jmx_available	number	JMX agent availability
+
+        # 0, HOST_AVAILABLE_UNKNOWN - unknown
+        # 1, HOST_AVAILABLE_TRUE - available
+        # 2, HOST_AVAILABLE_FALSE - unavailable
+        # jmx_error	string	JMX agent error message or empty string
+
+        if not (isinstance(available, int)) or available not in [0, 1, 2]:
+            raise TypeError('available must be int 0,1,2')
+        if snmp_available is not None and (not (isinstance(snmp_available, int)) or snmp_available not in [0, 1, 2]):
+            raise TypeError('snmp_available must be int 0,1,2')
+        if ipmi_available is not None and (not (isinstance(ipmi_available, int)) or ipmi_available not in [0, 1, 2]):
+            raise TypeError('ipmi_available must be int 0,1,2')
+        if jmx_available is not None and (not (isinstance(available, int)) or jmx_available not in [0, 1, 2]):
+            raise TypeError('jmx_available must be int 0,1,2')
+
+        metric = {'hostid': int(hostid),
+                  'available': int(available)}
+
+        if snmp_available is not None:
+            metric['snmp_available'] = int(snmp_available)
+            if snmp_available == 2:
+                metric['snmp_error'] = str(snmp_error)
+
+        if ipmi_available is not None:
+            metric['ipmi_available'] = int(ipmi_available)
+            if ipmi_available == 2:
+                metric['ipmi_error'] = str(ipmi_error)
+
+        if jmx_available is not None:
+            metric['jmx_available'] = int(jmx_available)
+            if jmx_available == 2:
+                metric['jmx_error'] = str(jmx_error)
+
+        self.packet['data'].append(metric)
+
+    def clean(self):
+        self.packet = {'request': 'host availability',
+                       'host': self.proxy_name,
+                       'data': []}
+
+
+class ProxyHistorydataPacket:
+    # This is for version 3.2.X only
+    def __init__(self, proxy_name):
+        self.proxy_name = proxy_name
+        self.clean()
+
+    def __str__(self):
+        return json.dumps(self.packet)
+
+    def add(self, host, key, value, state=0, clock=datetime.now().timestamp()):
+        # state
+        # 0, ITEM_STATE_NORMAL
+        # 1, ITEM_STATE_NOTSUPPORTED
+        if not (isinstance(clock, int)) and not (isinstance(clock, float)):
+            raise TypeError('Clock must be unixtime')
+
+        if not (isinstance(state, int)) and state not in [0, 1]:
+            raise TypeError('state must be int 0,1')
+
+        metric = {'host': str(host),
+                  'key': str(key),
+                  'state': int(state),
+                  'value': str(value),
+                  'clock': int(clock)}
+
+        self.packet['data'].append(metric)
+
+    def clean(self):
+        self.packet = {'request': 'history data',
                        'host': self.proxy_name,
                        'data': [],
                        'clock': datetime.now().timestamp()}
