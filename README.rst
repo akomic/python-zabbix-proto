@@ -1,52 +1,32 @@
-Zabbix Proxy Sender
+Python Zabbix Proto
 ===================
 
-|PyPI| |PyPI Count| |Build Status| |Coverage Status|
-
-Disclaimer
-==========
-
-Quick Start
------------
-
-Connection settings
+Module supporting all Zabbix specific communication protocols. At the
+moment Proxy protocol (active) is supported.
 
 .. code:: python
 
-    from ZabbixProxySender import ZabbixProxySender, ZabbixProxyPacket
-    server = ZabbixProxySender('127.0.0.1', 10051)
+    from zabbixproto import ProxyAutoregistrationPacket, ProxyHistorydataPacket, Proxy
+    proxy = Proxy('testproxy', '127.0.0.1', 10051)
 
-Create a package and add the metric values. In the first example with
-the current time, the second specified in unixtime format.
+    # Sending heartbeat to the Zabbix server
+    proxy.send_heartbeat()
 
-.. code:: python
+    # Getting "proxy configuration". Includes all hosts, items etc.
+    resp = proxy.get_config()
+    print(resp)
 
-    packet = ZabbixPacket('proxy name')
-    packet.add('myhost','key', 'value')
-    packet.add('myhost2', 'other_key', 'value2', 1455607162)
+    # Sending auto-registration packets
+    data = ProxyAutoregistrationPacket('testproxy-zdbp')
+    data.add('testhost', host_metadata="registerThisTestHost")
+    proxy.sendWithResponse(data)
 
-Now we send our package in Zabbix Server
+    # Sending metrics
+    data = ProxyHistorydataPacket('testproxy')
+    data.add(host='testhost', key='my.key',
+             value=100)
+    # UNSUPPORTED
+    data.add(host='testhost', key='my.key2',
+             value='Unsupported because this and that', state=1)
+    proxy.sendWithResponse(data)
 
-.. code:: python
-
-    server.send(packet)
-
-And see the delivery status
-
-.. code:: python
-
-    print(server.status)
-
-::
-
-    {'info': 'processed: 2; failed: 0; total: 4; seconds spent: 0.207659',
-     'response': 'success'}
-
-.. |PyPI| image:: https://img.shields.io/pypi/v/ZabbixProxySender.svg
-   :target: https://pypi.python.org/pypi/ZabbixProxySender
-.. |PyPI Count| image:: https://img.shields.io/pypi/dw/ZabbixProxySender.svg
-   :target: https://pypi.python.org/pypi/ZabbixProxySender
-.. |Build Status| image:: https://travis-ci.org/akomic/zproxysender.svg?branch=master
-   :target: https://travis-ci.org/akomic/zproxysender
-.. |Coverage Status| image:: https://coveralls.io/repos/github/akomic/zproxysender/badge.svg?branch=master
-   :target: https://coveralls.io/github/akomic/zproxysender?branch=master
