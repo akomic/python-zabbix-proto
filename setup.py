@@ -3,8 +3,8 @@ from distutils.core import setup
 setup(name='ZabbixProto',
       version='0.0.1',
       description='Zabbix Communication Protocols',
-      long_description=open('README.rst', 'r').read() + '\n\n' + open(
-          'CHANGELOG.rst', 'r').read(),
+      long_description=open('README.md', 'r').read() + '\n\n' + open(
+          'CHANGELOG.md', 'r').read(),
       author='Alen Komic',
       author_email='akomic@gmail.com',
       url='https://github.com/akomic/python-zabbix-proto',
