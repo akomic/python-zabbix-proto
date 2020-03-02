@@ -34,14 +34,18 @@ class Client:
                            'port': self.port},
                           indent=4)
 
-    def send(self, packet):
-        packet = str(packet).encode('utf-8')
+    def send(self, data):
+        packetData = str(data).encode('utf-8')
         socket.setdefaulttimeout(60)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         s.connect((self.server, int(self.port)))
 
-        s.send(packet)
+        data_length = len(packetData)
+        data_header = struct.pack('<Q', data_length)
+        packet = bytes('ZBXD\1', 'utf-8') + data_header + packetData
+
+        s.sendall(packet)
         time.sleep(0.5)
 
         datalen = None

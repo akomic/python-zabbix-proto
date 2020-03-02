@@ -1,14 +1,12 @@
 from distutils.core import setup
 
 setup(name='ZabbixProto',
-      version='v0.0.1',
+      version='0.0.3',
       description='Zabbix Communication Protocols',
-      long_description=open('README.md', 'r').read() + '\n\n' + open(
-          'CHANGELOG.md', 'r').read(),
       author='Alen Komic',
       author_email='akomic@gmail.com',
       url='https://github.com/akomic/python-zabbix-proto',
-      download_url='https://github.com/akomic/python-zabbix-proto/archive/v0.0.1.tar.gz',
+      download_url='https://github.com/akomic/python-zabbix-proto/archive/v0.0.3.tar.gz',
       packages=['zabbixproto'],
       install_requires=[
           'datetime',
@@ -21,7 +19,7 @@ setup(name='ZabbixProto',
       keywords='Zabbix Protocols Sender Proxy Agent',
       license='Apache Software License',
       classifiers=[
-          'Development Status :: 2 - Alpha',
+          'Development Status :: 3 - Alpha',
           'License :: OSI Approved :: Apache Software License',
           'Programming Language :: Python :: 3',
           'Topic :: System :: Monitoring',

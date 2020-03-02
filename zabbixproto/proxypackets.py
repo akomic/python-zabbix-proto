@@ -22,7 +22,7 @@ class Proxy:
             raise ResponseException('no response')
         elif resp.data['response'] != 'success':
             if 'info' in resp.data:
-                raise ResponseException(resp.data['info'])
+                raise ResponseException("[{}]".format(resp.data['info']))
             else:
                 raise ResponseException('unknown failure: {}'.format(resp))
         return (resp.data['info'] if 'info' in resp.data else '')
@@ -31,6 +31,9 @@ class Proxy:
         packet = ProxyConfigPacket(self.proxy_name)
 
         resp = self.client.send(packet)
+
+        if 'response' in resp.data and resp.data['response'] == 'failed':
+            raise ResponseException(resp.data['info'])
 
         return resp
 
