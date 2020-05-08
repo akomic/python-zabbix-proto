@@ -5,3 +5,4 @@ zabbixproto/__init__.py
 zabbixproto/client.py
 zabbixproto/config.py
 zabbixproto/proxypackets.py
+zabbixproto/senderpackets.py

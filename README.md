@@ -2,7 +2,7 @@ Python Zabbix Proto
 ===================
 
 Module supporting all Zabbix specific communication protocols.
-At the moment Proxy protocol (active) is supported.
+At the moment Proxy (active) and sender protocols are supported.
 
 ```python
 from zabbixproto import ProxyAutoregistrationPacket, ProxyHistorydataPacket, Proxy
@@ -28,4 +28,14 @@ data.add(host='testhost', key='my.key',
 data.add(host='testhost', key='my.key2',
          value='Unsupported because of this and that', state=1)
 proxy.sendWithResponse(data)
+```
+
+# Sender
+```python
+from zabbixproto import Sender, SenderDataPacket
+
+sender = Sender('127.0.0.1', 10051)
+packet = SenderDataPacket()
+packet.add("hostname", "key", "value")
+sender.sendWithResponse(packet)
 ```
