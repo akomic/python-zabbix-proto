@@ -12,7 +12,6 @@ class Sender:
 
     def sendWithResponse(self, packet):
         resp = self.client.send(packet)
-        print("[{}]".format(resp))
         if 'response' not in resp.data:
             raise ResponseException('no response')
         elif resp.data['response'] != 'success':
