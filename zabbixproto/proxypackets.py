@@ -19,6 +19,7 @@ class Proxy:
     def sendWithResponse(self, packet):
         resp = self.client.send(packet)
         if 'response' not in resp.data:
+            print(resp)
             raise ResponseException('no response')
         elif resp.data['response'] != 'success':
             if 'info' in resp.data:
