@@ -13,7 +13,8 @@ At the moment Proxy (active) and sender protocols are supported.
 
 # Proxy
 ```python
-from zabbixproto import ProxyAutoregistrationPacket, ProxyHistorydataPacket, Proxy
+from datetime import datetime
+from zabbixproto import Proxy, ProxyDataPacket
 proxy = Proxy('testproxy', '127.0.0.1', 10051)
 
 ## Sending heartbeat to the Zabbix server
@@ -23,19 +24,29 @@ proxy.send_heartbeat()
 resp = proxy.get_config()
 print(resp)
 
+data = ProxyDataPacket('testproxy')
 ## Sending auto-registration packets
-data = ProxyAutoregistrationPacket('testproxy-zdbp')
-data.add('testhost', host_metadata="registerThisTestHost")
-proxy.sendWithResponse(data)
+data.add_autoregistration(
+    host="testhost",
+    host_metadata="registerThisTestHost"
+)
 
 ## Sending metrics
-data = ProxyHistorydataPacket('testproxy')
-data.add(host='testhost', key='my.key',
-         value=100)
+data.add_history_data(
+    itemid=12345,
+    value=100,
+    clock=datetime.now().timestamp()
+)
+
 ## UNSUPPORTED
-data.add(host='testhost', key='my.key2',
-         value='Unsupported because of this and that', state=1)
-proxy.sendWithResponse(data)
+data.add_history_data(
+    itemid=12345,
+    value="Unsupported because of this and that",
+    state=1,
+    clock=datetime.now().timestamp()
+)
+print(proxy.sendWithResponse(data))
+
 ```
 
 # Sender
