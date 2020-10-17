@@ -45,6 +45,14 @@ data.add_history_data(
     state=1,
     clock=datetime.now().timestamp()
 )
+
+## Unavaible host
+data.add_host_availability(
+    hostid=100,
+    available=2, # 0 - Unknown, 1 - Available, 2 - Unavailable
+    error='Web site is down!'
+)
+
 print(proxy.sendWithResponse(data))
 
 ```
