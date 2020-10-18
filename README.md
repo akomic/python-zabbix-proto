@@ -11,6 +11,12 @@ At the moment Proxy (active) and sender protocols are supported.
 | >=1.0.0                 | >=5.0    |
 
 
+# Installation
+
+```bash
+pip install zabbixproto
+```
+
 # Proxy
 ```python
 from datetime import datetime
