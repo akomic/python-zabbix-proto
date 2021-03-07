@@ -158,13 +158,12 @@ class ProxyDataPacket:
 
         self.packet['history data'].append(metric)
 
-    def add_autoregistration(self, host, ip=None, dns=None, port=None, host_metadata=None, clock=datetime.now().timestamp()):
+    def add_autoregistration(self, host, ip="127.0.0.1", dns=None, port=None, host_metadata=None, clock=datetime.now().timestamp()):
         if (isinstance(clock, int)) or (isinstance(clock, float)):
             metric = {'host': str(host),
-                      'clock': int(clock)}
+                      'clock': int(clock),
+                      'ip': str(ip)}
 
-            if ip is not None:
-                metric['ip'] = str(ip)
             if dns is not None:
                 metric['dns'] = str(dns)
             if port is not None:
@@ -174,13 +173,13 @@ class ProxyDataPacket:
         else:
             raise TypeError('Clock must be unixtime')
 
-        if 'autoregistration' not in self.packet:
-            self.packet['autoregistration'] = []
-        self.packet['autoregistration'].append(metric)
+        if 'auto registration' not in self.packet:
+            self.packet['auto registration'] = []
+        self.packet['auto registration'].append(metric)
 
     def data_size(self):
         size = 0
-        for l in ['host availability', 'history data', 'discovery data', 'autoregistration', 'tasks']:
+        for l in ['host availability', 'history data', 'discovery data', 'auto registration', 'tasks']:
             if l in self.packet:
                 try:
                     size += len(self.packet[l])
