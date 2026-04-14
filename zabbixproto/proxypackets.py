@@ -16,7 +16,10 @@ class Proxy:
 
     def send_heartbeat(self):
         packet = ProxyHeartbeatPacket(self.proxy_name)
-        self.sendWithResponse(packet)
+        try:
+            self.sendWithResponse(packet)
+        except ResponseException:
+            pass  # Heartbeat response may be empty in Zabbix 7.0
 
     def sendWithResponse(self, packet):
         resp = self.client.send(packet)
