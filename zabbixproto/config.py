@@ -1,4 +1,4 @@
-PROXY_VERSION = "5.0.0"
+PROXY_VERSION = "7.0.0"
 
 
 class ResponseException(Exception):

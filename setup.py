@@ -1,12 +1,12 @@
 from distutils.core import setup
 
 setup(name='ZabbixProto',
-      version='1.0.1',
+      version='2.0.0rc1',
       description='Zabbix Communication Protocols',
       author='Alen Komic',
       author_email='akomic@gmail.com',
       url='https://github.com/akomic/python-zabbix-proto',
-      download_url='https://github.com/akomic/python-zabbix-proto/archive/v1.0.1.tar.gz',
+      download_url='https://github.com/akomic/python-zabbix-proto/archive/v2.0.0.tar.gz',
       packages=['zabbixproto'],
       install_requires=[
           'datetime'
