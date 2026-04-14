@@ -2,11 +2,12 @@ import json
 import socket
 import time
 import struct
+import zlib
 
 
 class Response:
-    def __init__(self, json):
-        self.json = json
+    def __init__(self, json_str):
+        self.json = json_str
         self.data = {}
         self.__parse()
 
@@ -43,30 +44,45 @@ class Client:
 
         data_length = len(packetData)
         data_header = struct.pack('<Q', data_length)
-        packet = bytes('ZBXD\1', 'utf-8') + data_header + packetData
+        packet = b'ZBXD\x01' + data_header + packetData
 
         s.sendall(packet)
         time.sleep(0.5)
 
-        datalen = None
+        # Read header (13 bytes minimum: ZBXD + flags + 8 byte length)
+        header = b''
+        while len(header) < 13:
+            chunk = s.recv(13 - len(header))
+            if not chunk:
+                break
+            header += chunk
+
+        if len(header) < 13 or header[0:4] != b'ZBXD':
+            s.close()
+            return Response('')
+
+        flags = header[4]
+        compressed = (flags & 0x02) != 0
+
+        if compressed:
+            # Compressed: first 4 bytes of length = compressed size, next 4 = original size
+            compressed_len = struct.unpack('<I', header[5:9])[0]
+            original_len = struct.unpack('<I', header[9:13])[0]
+            datalen = compressed_len
+        else:
+            datalen = struct.unpack('<Q', header[5:13])[0]
+
+        # Read body
         body = b''
-        idx = 0
-        while True:
-            idx += 1
-            if datalen is not None and len(body) >= datalen:
+        while len(body) < datalen:
+            chunk = s.recv(min(4096, datalen - len(body)))
+            if not chunk:
                 break
+            body += chunk
 
-            data = s.recv(1024)
-
-            if len(data) == 0 and idx >= 5:
-                break
-
-            if datalen is None and data[0:5] == b'ZBXD\1':
-                datalen = struct.unpack('<Q', data[5:13])[0]
-                body = data[13:]
-            else:
-                body += data
-
-        resp = Response(body.decode('utf-8'))
         s.close()
-        return resp
+
+        if compressed:
+            body = zlib.decompress(body)
+
+        return Response(body.decode('utf-8'))

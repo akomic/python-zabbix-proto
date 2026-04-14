@@ -5,3 +5,5 @@ build
 x.py
 dist
 *.json
+.venv
+**/*.egg-info
