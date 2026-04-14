@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='ZabbixProto',
-      version='2.0.0rc1',
+      version='2.0.0',
       description='Zabbix Communication Protocols',
       author='Alen Komic',
       author_email='akomic@gmail.com',
