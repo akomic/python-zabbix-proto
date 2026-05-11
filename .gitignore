@@ -7,3 +7,4 @@ dist
 *.json
 .venv
 **/*.egg-info
+.kiro

@@ -1,0 +1,38 @@
+services:
+  postgres54:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      POSTGRES_DB: zabbix54
+    tmpfs: /var/lib/postgresql/data
+
+  zabbix54:
+    image: zabbix/zabbix-server-pgsql:alpine-5.4-latest
+    depends_on: [postgres54]
+    environment:
+      DB_SERVER_HOST: postgres54
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      POSTGRES_DB: zabbix54
+    ports:
+      - "10054:10051"
+
+  postgres74:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      POSTGRES_DB: zabbix74
+    tmpfs: /var/lib/postgresql/data
+
+  zabbix74:
+    image: zabbix/zabbix-server-pgsql:alpine-7.4-latest
+    depends_on: [postgres74]
+    environment:
+      DB_SERVER_HOST: postgres74
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix
+      POSTGRES_DB: zabbix74
+    ports:
+      - "10074:10051"

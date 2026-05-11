@@ -1,7 +1,8 @@
 from datetime import datetime
 import json
 
-from zabbixproto import PROXY_VERSION, ResponseException, Client
+from zabbixproto.config import ResponseException
+from zabbixproto.client import Client
 
 
 class Sender:
@@ -27,7 +28,7 @@ class SenderDataPacket:
         self.packet = {
             'request': 'sender data',
             'data': [],
-            'clock': datetime.now().timestamp() if clock == None else clock
+            'clock': int(datetime.now().timestamp()) if clock is None else int(clock)
         }
 
     def __str__(self):
