@@ -1,17 +1,27 @@
 from datetime import datetime
 import json
 import uuid
+import warnings
 
 from zabbixproto.config import DEFAULT_PROTOCOL_VERSION, ResponseException, is_v7
 from zabbixproto.client import Client
 
 
 def _normalize_version(version):
-    """Normalize to major.0.0 since protocol only changes at major boundaries."""
+    """Normalize to major.0.0 since protocol only changes at major boundaries.
+
+    On malformed input we fall back to DEFAULT_PROTOCOL_VERSION, but emit a
+    warning so the fallback is visible rather than silent.
+    """
     try:
-        major = int(version.split('.')[0])
+        major = int(str(version).split('.')[0])
         return "{}.0.0".format(major)
-    except (ValueError, IndexError):
+    except (ValueError, IndexError, AttributeError):
+        warnings.warn(
+            "Unparseable protocol version {!r}; falling back to default {}".format(
+                version, DEFAULT_PROTOCOL_VERSION),
+            stacklevel=2,
+        )
         return DEFAULT_PROTOCOL_VERSION
 
 
