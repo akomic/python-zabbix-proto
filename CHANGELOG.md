@@ -4,7 +4,7 @@ Python Zabbix Protocols
 All notable changes to this project are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## 2.2.0 (unreleased)
+## 2.2.0 (2026-07-28)
 - Version-aware `Proxy.send_heartbeat()`: Zabbix 7.x sends an empty `proxy data`
   keepalive (the `proxy heartbeat` request was removed in 7.0), while 5.x/6.x
   continue to send `proxy heartbeat`. Fixes proxy liveness reporting on 7.x.
