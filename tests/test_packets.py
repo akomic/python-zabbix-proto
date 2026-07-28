@@ -311,5 +311,55 @@ class TestSenderDataPacket(unittest.TestCase):
         self.assertEqual(data['data'][1]['host'], 'host2')
 
 
+class TestHeartbeatBehavior(unittest.TestCase):
+    def test_v7_heartbeat_is_empty_proxy_data(self):
+        # Zabbix 7.0 removed 'proxy heartbeat'; keepalive is an (empty) proxy data.
+        proxy = Proxy("testproxy", "127.0.0.1", 10051, protocol_version="7.0.0")
+        data = json.loads(str(proxy._heartbeat_packet()))
+        self.assertEqual(data['request'], 'proxy data')
+        self.assertEqual(data['host'], 'testproxy')
+        self.assertEqual(data['session'], proxy.session)
+        self.assertEqual(data['version'], '7.0.0')
+        # "empty" => carries no data arrays
+        for key in ('history data', 'interface availability', 'host availability',
+                    'discovery data', 'auto registration'):
+            self.assertNotIn(key, data)
+
+    def test_v5_heartbeat_is_proxy_heartbeat(self):
+        proxy = Proxy("testproxy", "127.0.0.1", 10051, protocol_version="5.4.0")
+        data = json.loads(str(proxy._heartbeat_packet()))
+        self.assertEqual(data['request'], 'proxy heartbeat')
+        self.assertEqual(data['host'], 'testproxy')
+        self.assertEqual(data['version'], '5.0.0')
+        self.assertNotIn('session', data)
+
+    def test_send_heartbeat_swallows_response_exception(self):
+        # An empty/failed reply must not propagate out of send_heartbeat().
+        proxy = Proxy("testproxy", "127.0.0.1", 10051, protocol_version="7.0.0")
+
+        class _StubClient:
+            sent = None
+
+            def send(self, data):
+                from zabbixproto.client import Response
+                _StubClient.sent = json.loads(str(data))
+                return Response('')  # no 'response' key -> ResponseException internally
+
+        proxy.client = _StubClient()
+        proxy.send_heartbeat()  # should not raise
+        self.assertEqual(_StubClient.sent['request'], 'proxy data')
+
+    def test_send_heartbeat_success(self):
+        proxy = Proxy("testproxy", "127.0.0.1", 10051, protocol_version="5.4.0")
+
+        class _StubClient:
+            def send(self, data):
+                from zabbixproto.client import Response
+                return Response('{"response": "success"}')
+
+        proxy.client = _StubClient()
+        proxy.send_heartbeat()  # should not raise
+
+
 if __name__ == '__main__':
     unittest.main()

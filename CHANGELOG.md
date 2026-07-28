@@ -4,6 +4,14 @@ Python Zabbix Protocols
 All notable changes to this project are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 2.2.0 (unreleased)
+- Version-aware `Proxy.send_heartbeat()`: Zabbix 7.x sends an empty `proxy data`
+  keepalive (the `proxy heartbeat` request was removed in 7.0), while 5.x/6.x
+  continue to send `proxy heartbeat`. Fixes proxy liveness reporting on 7.x.
+- Versioning is now derived from Git tags via `setuptools-scm` (tag `vX.Y.Z`
+  builds version `X.Y.Z`; pre-release tags such as `v2.2.0rc1` build `2.2.0rc1`).
+  CI checkouts use `fetch-depth: 0` so tags are available to the build.
+
 ## 2.1.1 (2026-07-28)
 - Packaging migrated from `distutils`/`setup.py` to `pyproject.toml` (PEP 621).
   Fixes the build on Python 3.12+ where `distutils` was removed. Corrects the

@@ -35,10 +35,22 @@ class Proxy:
         self.session = uuid.uuid4().hex if is_v7(self.protocol_version) else None
         self.config_revision = 0
 
+    def _heartbeat_packet(self):
+        """Build the keepalive packet appropriate for the protocol version.
+
+        Zabbix 7.0 removed the 'proxy heartbeat' request; an active proxy's
+        liveness is instead derived from its periodic 'proxy data' requests.
+        So for v7 we send an (otherwise empty) proxy data packet, while v5.x/6.x
+        keep the dedicated proxy heartbeat request.
+        """
+        if is_v7(self.protocol_version):
+            return ProxyDataPacket(self.proxy_name, session=self.session,
+                                   protocol_version=self.protocol_version)
+        return ProxyHeartbeatPacket(self.proxy_name, self.protocol_version)
+
     def send_heartbeat(self):
-        packet = ProxyHeartbeatPacket(self.proxy_name, self.protocol_version)
         try:
-            self.sendWithResponse(packet)
+            self.sendWithResponse(self._heartbeat_packet())
         except ResponseException:
             pass
 

@@ -33,6 +33,8 @@ proxy = Proxy('testproxy', '127.0.0.1', 10051)
 proxy = Proxy('testproxy', '127.0.0.1', 10051, protocol_version="5.4.0")
 
 ## Sending heartbeat to the Zabbix server
+## (version-aware: Zabbix 7.x sends an empty "proxy data" keepalive since the
+##  "proxy heartbeat" request was removed in 7.0; 5.x/6.x send "proxy heartbeat")
 proxy.send_heartbeat()
 
 ## Getting "proxy configuration". Includes all hosts, items etc.

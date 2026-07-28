@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=77"]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ZabbixProto"
-version = "2.1.1"
+dynamic = ["version"]
 description = "Zabbix Communication Protocols"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -28,3 +28,5 @@ Repository = "https://github.com/akomic/python-zabbix-proto"
 
 [tool.setuptools]
 packages = ["zabbixproto"]
+
+[tool.setuptools_scm]
