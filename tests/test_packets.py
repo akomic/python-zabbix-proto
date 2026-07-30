@@ -35,12 +35,30 @@ class TestProxyV7(unittest.TestCase):
         self.assertEqual(proxy.protocol_version, "7.0.0")  # normalized
         self.assertIsNotNone(proxy.session)
 
+    def test_injected_session_is_used(self):
+        # a shared, process-wide token can be injected so all Proxy instances
+        # of one logical proxy present a single session (like a native proxy)
+        proxy = Proxy("testproxy", "127.0.0.1", 10051, session="deadbeef" * 4)
+        self.assertEqual(proxy.session, "deadbeef" * 4)
+
+    def test_two_proxies_share_injected_session(self):
+        token = "cafebabe" * 4
+        reader = Proxy("testproxy", "127.0.0.1", 10051, session=token)
+        sender = Proxy("testproxy", "127.0.0.1", 10051, session=token)
+        self.assertEqual(reader.session, sender.session)
+
 
 class TestProxyV5(unittest.TestCase):
     def test_no_session(self):
         proxy = Proxy("testproxy", "127.0.0.1", 10051, protocol_version="5.4.0")
         self.assertIsNone(proxy.session)
         self.assertEqual(proxy.protocol_version, "5.0.0")  # normalized
+
+    def test_injected_session_ignored_on_v5(self):
+        # v5.x/6.x are session-less; an injected token must not leak into packets
+        proxy = Proxy("testproxy", "127.0.0.1", 10051, protocol_version="5.4.0",
+                      session="deadbeef" * 4)
+        self.assertIsNone(proxy.session)
 
 
 class TestHeartbeatV7(unittest.TestCase):
@@ -105,13 +123,54 @@ class TestDataPacketV7(unittest.TestCase):
         data = json.loads(str(pkt))
         self.assertEqual(data['history data'][0]['ns'], 500)
 
-    def test_history_data_id_counter(self):
+    def test_history_data_id_monotonic_within_packet(self):
         pkt = ProxyDataPacket("testproxy", protocol_version="7.0.0")
         pkt.add_history_data(itemid=1, value="a", clock=1700000000)
         pkt.add_history_data(itemid=2, value="b", clock=1700000000)
         data = json.loads(str(pkt))
-        self.assertEqual(data['history data'][0]['id'], 1)
-        self.assertEqual(data['history data'][1]['id'], 2)
+        # ids must strictly increase within a packet (exact start value is
+        # irrelevant -- a single process-wide counter is shared)
+        self.assertLess(data['history data'][0]['id'], data['history data'][1]['id'])
+
+    def test_history_data_id_does_not_reset_across_packets(self):
+        # Regression: Zabbix 7 records the highest per-session value id and drops
+        # any value whose id is <= it. A proxy reuses one session across many
+        # packets, so ids must keep climbing across packets rather than restart
+        # at 1 (which caused all-but-the-first packet to be silently dropped).
+        session = "sess-shared"
+        p1 = ProxyDataPacket("testproxy", session=session, protocol_version="7.0.0")
+        p1.add_history_data(itemid=1, value="a", clock=1700000000)
+        last_p1 = json.loads(str(p1))['history data'][-1]['id']
+
+        p2 = ProxyDataPacket("testproxy", session=session, protocol_version="7.0.0")
+        p2.add_history_data(itemid=2, value="b", clock=1700000000)
+        first_p2 = json.loads(str(p2))['history data'][0]['id']
+
+        self.assertGreater(first_p2, last_p1,
+                           "value id restarted across packets in the same session")
+
+    def test_history_data_id_unique_and_monotonic_across_threads(self):
+        import threading as _t
+        ids = []
+        ids_lock = _t.Lock()
+
+        def worker():
+            local = []
+            for _ in range(50):
+                pkt = ProxyDataPacket("testproxy", protocol_version="7.0.0")
+                pkt.add_history_data(itemid=1, value="x", clock=1700000000)
+                local.append(json.loads(str(pkt))['history data'][0]['id'])
+            with ids_lock:
+                ids.extend(local)
+
+        threads = [_t.Thread(target=worker) for _ in range(8)]
+        for th in threads:
+            th.start()
+        for th in threads:
+            th.join()
+
+        # every id handed out must be unique (no collisions under concurrency)
+        self.assertEqual(len(ids), len(set(ids)))
 
 
 class TestDataPacketV5(unittest.TestCase):

@@ -4,6 +4,22 @@ Python Zabbix Protocols
 All notable changes to this project are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 2.2.1rc1 (2026-07-30)
+- `Proxy(...)` now accepts an optional `session` token. A Zabbix 7.x proxy uses a
+  single session token for its whole lifetime; injecting one lets a multi-threaded
+  client (separate reader/sender `Proxy` instances) share one token and mirror a
+  native proxy instead of presenting many sessions. When omitted, a token is
+  generated as before (v5.x/6.x remain session-less).
+- Monotonic per-session `proxy data` value identifiers. Zabbix 7.x/6.x record the
+  highest value `id` processed for a proxy session and silently DISCARD any value
+  whose `id` is <= that high-water mark ("received value identifier X is lower
+  than the last processed value identifier Y"). Previously `id` restarted at 1 for
+  every packet, so a proxy that reuses one session across many packets had all but
+  the first packet dropped by the server. `id` is now drawn from a single
+  process-wide, thread-safe counter so every session emits strictly increasing
+  ids across packets and sender threads. (Zabbix 5.0 did not enforce this, so the
+  bug was invisible on 5.x and only surfaced on 7.x.)
+
 ## 2.2.0 (2026-07-28)
 - Version-aware `Proxy.send_heartbeat()`: Zabbix 7.x sends an empty `proxy data`
   keepalive (the `proxy heartbeat` request was removed in 7.0), while 5.x/6.x
