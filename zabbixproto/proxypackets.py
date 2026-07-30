@@ -1,10 +1,33 @@
 from datetime import datetime
+import itertools
 import json
+import threading
 import uuid
 import warnings
 
 from zabbixproto.config import DEFAULT_PROTOCOL_VERSION, ResponseException, is_v7
 from zabbixproto.client import Client
+
+
+# Zabbix 7.x (and 6.x) enforce a monotonically increasing per-session value
+# identifier on 'proxy data' uploads: the server records the highest 'id' it has
+# processed for a session and silently DISCARDS any value whose 'id' is <= that
+# high-water mark ("received value identifier X is lower than the last processed
+# value identifier Y"). A proxy reuses one session across many 'proxy data'
+# packets, so the 'id' must keep climbing across packets -- it must NOT restart
+# per packet. It does not need to start at 1; strict monotonic increase is all
+# that is required.
+#
+# A single process-wide, thread-safe counter guarantees that every session (and
+# every sender thread) only ever emits strictly increasing ids over time, with
+# no per-session state to track or leak.
+_value_id_counter = itertools.count(1)
+_value_id_lock = threading.Lock()
+
+
+def _next_value_id():
+    with _value_id_lock:
+        return next(_value_id_counter)
 
 
 def _normalize_version(version):
@@ -26,13 +49,21 @@ def _normalize_version(version):
 
 
 class Proxy:
-    def __init__(self, proxy_name, server_ip, server_port, protocol_version=None):
+    def __init__(self, proxy_name, server_ip, server_port, protocol_version=None, session=None):
         self.proxy_name = proxy_name
         self.server_ip = server_ip
         self.server_port = server_port
         self.protocol_version = _normalize_version(protocol_version or DEFAULT_PROTOCOL_VERSION)
         self.client = Client(self.server_ip, self.server_port)
-        self.session = uuid.uuid4().hex if is_v7(self.protocol_version) else None
+        # A Zabbix 7.x proxy uses ONE session token for its whole lifetime (the
+        # server keys the per-session history high-water mark on it). Allow the
+        # caller to inject a single process-wide token so that all threads/proxy
+        # instances of one logical proxy share it, mirroring a native proxy.
+        # v5.x/6.x do not use the session field, so it stays None there.
+        if is_v7(self.protocol_version):
+            self.session = session or uuid.uuid4().hex
+        else:
+            self.session = None
         self.config_revision = 0
 
     def _heartbeat_packet(self):
@@ -184,7 +215,7 @@ class ProxyDataPacket:
             'itemid': str(itemid),
             'clock': int(clock),
             'value': value,
-            'id': len(self.packet.get('history data', [])) + 1,
+            'id': _next_value_id(),
             'state': str(state),
         }
         if is_v7(self.protocol_version):
